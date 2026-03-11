@@ -257,6 +257,10 @@ services.AddSingleton<ISystemTime, SystemTime>();
 services.AddSingleton<IAgentHubSessionCache, AgentHubSessionCache>();
 services.AddHostedService<RemoteControlSessionCleaner>();
 services.AddHostedService<RemoteControlSessionReconnector>();
+services.AddTransient<IBackupService, BackupService>();
+services.Configure<GoogleDriveOptions>(
+    configuration.GetSection(GoogleDriveOptions.SectionName));
+services.AddSingleton<IGoogleDriveService, GoogleDriveService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

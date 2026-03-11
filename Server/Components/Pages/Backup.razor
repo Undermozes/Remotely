@@ -1,0 +1,416 @@
+@page "/backup"
+@attribute [Authorize]
+@inherits AuthComponentBase
+
+@inject IDataService DataService
+@inject IBackupService BackupService
+@inject IGoogleDriveService GoogleDriveService
+@inject IToastService ToastService
+@inject IJsInterop JsInterop
+@inject NavigationManager NavigationManager
+
+<h3 class="mb-3">Backup &amp; Restore</h3>
+
+@if (!string.IsNullOrWhiteSpace(_alertMessage))
+{
+    <AlertBanner Message="@_alertMessage" />
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        @* ───────── Create Backup Section ───────── *@
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span class="oi oi-cloud-download me-2"></span>Create Backup
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Create a backup of your account data including your devices and device groups.
+                    The backup will be downloaded as a JSON file.
+                </p>
+                <button class="btn btn-primary" @onclick="CreateAndDownloadBackup" disabled="@_isProcessing">
+                    @if (_isProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    <span class="oi oi-data-transfer-download me-1"></span> Download Backup
+                </button>
+            </div>
+        </div>
+
+        @* ───────── Restore Backup Section ───────── *@
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span class="oi oi-cloud-upload me-2"></span>Restore Backup
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Upload a previously created backup file to restore device metadata
+                    (aliases, tags, notes, and device group assignments).
+                </p>
+                <div class="mb-3">
+                    <InputFile OnChange="OnRestoreFileSelected" class="form-control" accept=".json" />
+                </div>
+                @if (_restoreFileContent is not null)
+                {
+                    <p class="text-info small">
+                        File loaded: @_restoreFileName
+                    </p>
+                    <button class="btn btn-warning" @onclick="RestoreFromFile" disabled="@_isProcessing">
+                        @if (_isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        <span class="oi oi-loop-circular me-1"></span> Restore Backup
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* ───────── Google Drive Section ───────── *@
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span class="oi oi-hard-drive me-2"></span>Google Drive
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (!GoogleDriveService.IsConfigured)
+                {
+                    <div class="alert alert-info">
+                        <strong>Google Drive is not configured.</strong>
+                        <p class="mb-0 mt-1">
+                            Ask your server administrator to configure Google Drive OAuth credentials
+                            (Client ID and Client Secret) in the server settings.
+                        </p>
+                    </div>
+                }
+                else if (!_isGoogleDriveConnected)
+                {
+                    <p class="text-muted">
+                        Connect your Google Drive account to store and retrieve backups in the cloud.
+                    </p>
+                    <button class="btn btn-outline-primary" @onclick="ConnectGoogleDrive">
+                        <span class="oi oi-link-intact me-1"></span> Connect to Google Drive
+                    </button>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-success">
+                            <span class="oi oi-check me-1"></span> Connected to Google Drive
+                        </span>
+                        <button class="btn btn-outline-danger btn-sm" @onclick="DisconnectGoogleDrive">
+                            <span class="oi oi-link-broken me-1"></span> Disconnect
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-success" @onclick="UploadToGoogleDrive" disabled="@_isProcessing">
+                            @if (_isProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            }
+                            <span class="oi oi-cloud-upload me-1"></span> Upload Backup to Drive
+                        </button>
+                        <button class="btn btn-outline-secondary" @onclick="RefreshDriveBackups" disabled="@_isProcessing">
+                            <span class="oi oi-reload me-1"></span> Refresh
+                        </button>
+                    </div>
+
+                    @if (_driveBackups.Count > 0)
+                    {
+                        <h6>Backups on Google Drive</h6>
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Created</th>
+                                    <th>Size</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var file in _driveBackups)
+                                {
+                                    <tr>
+                                        <td>@file.Name</td>
+                                        <td>@file.CreatedTime?.LocalDateTime.ToString("g")</td>
+                                        <td>@FormatFileSize(file.Size)</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    @onclick="() => RestoreFromGoogleDrive(file.Id)"
+                                                    disabled="@_isProcessing">
+                                                <span class="oi oi-loop-circular"></span> Restore
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else if (_driveBackupsLoaded)
+                    {
+                        <p class="text-muted">No backups found on Google Drive.</p>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _alertMessage;
+    private bool _isProcessing;
+    private bool _isGoogleDriveConnected;
+    private bool _driveBackupsLoaded;
+    private string? _restoreFileContent;
+    private string? _restoreFileName;
+    private List<GoogleDriveFileInfo> _driveBackups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (User is not null)
+        {
+            _isGoogleDriveConnected = GoogleDriveService.IsConnected(User.Id);
+
+            if (_isGoogleDriveConnected)
+            {
+                await RefreshDriveBackups();
+            }
+        }
+    }
+
+    private async Task CreateAndDownloadBackup()
+    {
+        EnsureUserSet();
+        _isProcessing = true;
+        _alertMessage = null;
+
+        try
+        {
+            var devices = DataService.GetDevicesForUser(UserName);
+            var deviceGroups = DataService.GetDeviceGroups(UserName);
+
+            var backup = BackupService.CreateBackup(User, devices, deviceGroups);
+            var json = BackupService.SerializeBackup(backup);
+
+            var fileName = $"remotely-backup-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.json";
+
+            await JsInterop.DownloadFile(fileName, json);
+
+            _alertMessage = "Backup created and downloaded successfully.";
+            ToastService.ShowToast("Backup downloaded.");
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error creating backup: {ex.Message}";
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private async Task OnRestoreFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            _restoreFileName = file.Name;
+
+            using var reader = new StreamReader(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
+            _restoreFileContent = await reader.ReadToEndAsync();
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error reading file: {ex.Message}";
+            _restoreFileContent = null;
+        }
+    }
+
+    private async Task RestoreFromFile()
+    {
+        EnsureUserSet();
+        _isProcessing = true;
+        _alertMessage = null;
+
+        try
+        {
+            if (string.IsNullOrEmpty(_restoreFileContent))
+            {
+                _alertMessage = "No backup file loaded.";
+                return;
+            }
+
+            var backup = BackupService.DeserializeBackup(_restoreFileContent);
+            if (backup is null)
+            {
+                _alertMessage = "Invalid backup file format.";
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(backup.UserName) &&
+                !string.Equals(backup.UserName, UserName, StringComparison.OrdinalIgnoreCase))
+            {
+                _alertMessage = "This backup belongs to a different user account.";
+                return;
+            }
+
+            var existingDevices = DataService.GetDevicesForUser(UserName);
+            await BackupService.RestoreBackupAsync(backup, existingDevices, DataService);
+
+            _alertMessage = "Backup restored successfully.";
+            _restoreFileContent = null;
+            _restoreFileName = null;
+
+            ToastService.ShowToast("Backup restored.");
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error restoring backup: {ex.Message}";
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private void ConnectGoogleDrive()
+    {
+        EnsureUserSet();
+
+        var redirectUri = $"{NavigationManager.BaseUri.TrimEnd('/')}/api/googledrivecallback";
+        var authUrl = GoogleDriveService.GetAuthorizationUrl(User.Id, redirectUri);
+        NavigationManager.NavigateTo(authUrl, forceLoad: true);
+    }
+
+    private void DisconnectGoogleDrive()
+    {
+        EnsureUserSet();
+        GoogleDriveService.Disconnect(User.Id);
+        _isGoogleDriveConnected = false;
+        _driveBackups.Clear();
+        _driveBackupsLoaded = false;
+        ToastService.ShowToast("Disconnected from Google Drive.");
+    }
+
+    private async Task UploadToGoogleDrive()
+    {
+        EnsureUserSet();
+        _isProcessing = true;
+        _alertMessage = null;
+
+        try
+        {
+            var devices = DataService.GetDevicesForUser(UserName);
+            var deviceGroups = DataService.GetDeviceGroups(UserName);
+
+            var backup = BackupService.CreateBackup(User, devices, deviceGroups);
+            var json = BackupService.SerializeBackup(backup);
+
+            var fileName = $"remotely-backup-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.json";
+
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+            await GoogleDriveService.UploadBackupAsync(User.Id, fileName, stream);
+
+            await RefreshDriveBackups();
+
+            _alertMessage = "Backup uploaded to Google Drive successfully.";
+            ToastService.ShowToast("Backup uploaded to Google Drive.");
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error uploading to Google Drive: {ex.Message}";
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private async Task RefreshDriveBackups()
+    {
+        EnsureUserSet();
+
+        try
+        {
+            _driveBackups = await GoogleDriveService.ListBackupsAsync(User.Id);
+            _driveBackupsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error listing Google Drive backups: {ex.Message}";
+            _driveBackupsLoaded = true;
+        }
+    }
+
+    private async Task RestoreFromGoogleDrive(string fileId)
+    {
+        EnsureUserSet();
+        _isProcessing = true;
+        _alertMessage = null;
+
+        try
+        {
+            using var stream = await GoogleDriveService.DownloadBackupAsync(User.Id, fileId);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var backup = BackupService.DeserializeBackup(json);
+            if (backup is null)
+            {
+                _alertMessage = "Invalid backup file on Google Drive.";
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(backup.UserName) &&
+                !string.Equals(backup.UserName, UserName, StringComparison.OrdinalIgnoreCase))
+            {
+                _alertMessage = "This backup belongs to a different user account.";
+                return;
+            }
+
+            var existingDevices = DataService.GetDevicesForUser(UserName);
+            await BackupService.RestoreBackupAsync(backup, existingDevices, DataService);
+
+            _alertMessage = "Backup restored from Google Drive successfully.";
+            ToastService.ShowToast("Backup restored from Google Drive.");
+        }
+        catch (Exception ex)
+        {
+            _alertMessage = $"Error restoring from Google Drive: {ex.Message}";
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private static string FormatFileSize(long? bytes)
+    {
+        if (bytes is null)
+        {
+            return "Unknown";
+        }
+
+        if (bytes.Value < 1024)
+        {
+            return $"{bytes} B";
+        }
+        else if (bytes.Value < 1024 * 1024)
+        {
+            return $"{bytes / 1024.0:F1} KB";
+        }
+        else
+        {
+            return $"{bytes / (1024.0 * 1024.0):F1} MB";
+        }
+    }
+}

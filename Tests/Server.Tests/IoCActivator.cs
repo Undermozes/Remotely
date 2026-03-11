@@ -42,6 +42,7 @@ public class IoCActivator
         _builder.Services.AddTransient<IAppDbFactory, AppDbFactory>();
         _builder.Services.AddTransient<IDataService, DataService>();
         _builder.Services.AddTransient<IEmailSenderEx, EmailSenderEx>();
+        _builder.Services.AddLogging();
 
         _webApp = _builder.Build();
     }

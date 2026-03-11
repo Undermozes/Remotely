@@ -31,6 +31,8 @@ public interface IJsInterop
 
     void SetStyleProperty(ElementReference element, string propertyName, string value);
     void StartDraggingY(ElementReference element, double clientY);
+
+    ValueTask DownloadFile(string fileName, string content);
 }
 
 public class JsInterop : IJsInterop
@@ -114,5 +116,10 @@ public class JsInterop : IJsInterop
     public void StartDraggingY(ElementReference element, double clientY)
     {
         _jsRuntime.InvokeVoidAsync("startDraggingY", element, clientY);
+    }
+
+    public ValueTask DownloadFile(string fileName, string content)
+    {
+        return _jsRuntime.InvokeVoidAsync("downloadFileFromText", fileName, content);
     }
 }
