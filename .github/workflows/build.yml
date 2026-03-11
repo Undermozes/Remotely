@@ -26,6 +26,9 @@ on:
         required: false
         default: "linux-x64"
 
+permissions:
+  contents: read
+
 jobs:
 
   build-mac:
