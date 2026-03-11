@@ -36,6 +36,7 @@ public interface IViewer : IDisposable
     Task SendDesktopStream(IAsyncEnumerable<byte[]> asyncEnumerable, Guid streamId);
     Task SendFile(FileUpload fileUpload, Action<double> progressUpdateCallback, CancellationToken cancelToken);
     Task SendScreenData(string selectedDisplay, IEnumerable<string> displayNames, int screenWidth, int screenHeight);
+    Task SendScreenThumbnails();
     Task SendScreenSize(int width, int height);
     Task SendSessionMetrics(SessionMetricsDto metrics);
     Task SendWindowsSessions();
@@ -273,9 +274,48 @@ public class Viewer : IViewer
             DisplayNames = displayNames,
             SelectedDisplay = selectedDisplay,
             ScreenWidth = screenWidth,
-            ScreenHeight = screenHeight
+            ScreenHeight = screenHeight,
+            DisplayLayouts = Capturer.GetDisplayLayouts().ToArray()
         };
         await TrySendToViewer(dto, DtoType.ScreenData, ViewerConnectionId);
+    }
+
+    public async Task SendScreenThumbnails()
+    {
+        foreach (var displayName in Capturer.GetDisplayNames())
+        {
+            try
+            {
+                var thumbnailResult = Capturer.GetDisplayThumbnail(displayName);
+                if (!thumbnailResult.IsSuccess || thumbnailResult.Value is null)
+                {
+                    continue;
+                }
+
+                using var bitmap = thumbnailResult.Value;
+                const int maxWidth = 320;
+                int thumbWidth = Math.Min(maxWidth, bitmap.Width);
+                int thumbHeight = (int)Math.Round((double)bitmap.Height / bitmap.Width * thumbWidth);
+
+                using var scaledBitmap = bitmap.Resize(new SkiaSharp.SKImageInfo(thumbWidth, thumbHeight), SkiaSharp.SKFilterQuality.Low);
+                using var image = SkiaSharp.SKImage.FromBitmap(scaledBitmap);
+                using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 50);
+                var jpegBytes = data.ToArray();
+
+                var thumbnailDto = new ScreenThumbnailDto
+                {
+                    DisplayName = displayName,
+                    ImageBytes = jpegBytes,
+                    Width = thumbWidth,
+                    Height = thumbHeight
+                };
+                await TrySendToViewer(thumbnailDto, DtoType.ScreenThumbnail, ViewerConnectionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while sending thumbnail for display {displayName}.", displayName);
+            }
+        }
     }
 
     public async Task SendScreenSize(int width, int height)

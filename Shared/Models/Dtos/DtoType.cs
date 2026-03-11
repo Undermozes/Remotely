@@ -54,5 +54,7 @@ public enum DtoType
     [EnumMember]
     SessionMetrics = 28,
     [EnumMember]
-    QualityMode = 29
+    QualityMode = 29,
+    [EnumMember]
+    ScreenThumbnail = 30
 }

@@ -1,4 +1,5 @@
-﻿using Remotely.Shared.Primitives;
+﻿using Remotely.Shared.Models.Dtos;
+using Remotely.Shared.Primitives;
 using SkiaSharp;
 using System.Drawing;
 
@@ -13,11 +14,14 @@ public interface IScreenCapturer : IDisposable
     bool IsGpuAccelerated { get; }
     string SelectedScreen { get; }
     IEnumerable<string> GetDisplayNames();
+    IEnumerable<DisplayLayoutDto> GetDisplayLayouts();
     SKRect GetFrameDiffArea();
 
     Result<SKBitmap> GetImageDiff();
 
     Result<SKBitmap> GetNextFrame();
+
+    Result<SKBitmap> GetDisplayThumbnail(string displayName);
 
     int GetScreenCount();
 

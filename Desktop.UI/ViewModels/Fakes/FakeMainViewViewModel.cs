@@ -144,6 +144,11 @@ public class FakeMainViewViewModel : FakeBrandedViewModelBase, IMainViewViewMode
             return Task.CompletedTask;
         }
 
+        public Task SendScreenThumbnails()
+        {
+            return Task.CompletedTask;
+        }
+
         public Task SendScreenSize(int width, int height)
         {
             return Task.CompletedTask;

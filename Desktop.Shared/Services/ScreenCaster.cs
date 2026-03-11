@@ -116,6 +116,8 @@ internal class ScreenCaster : IScreenCaster
                 screenBounds.Width,
                 screenBounds.Height);
 
+            await viewer.SendScreenThumbnails();
+
             await viewer.SendCursorChange(_cursorIconWatcher.GetCurrentCursor());
 
             await viewer.SendWindowsSessions();

@@ -25,5 +25,6 @@ export var DtoType;
     DtoType[DtoType["OpenFileTransferWindow"] = 27] = "OpenFileTransferWindow";
     DtoType[DtoType["SessionMetrics"] = 28] = "SessionMetrics";
     DtoType[DtoType["QualityMode"] = 29] = "QualityMode";
+    DtoType[DtoType["ScreenThumbnail"] = 30] = "ScreenThumbnail";
 })(DtoType || (DtoType = {}));
 //# sourceMappingURL=DtoType.js.map

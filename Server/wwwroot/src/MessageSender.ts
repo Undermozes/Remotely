@@ -1,4 +1,4 @@
-﻿import { ViewerApp } from "./App.js";
+import { ViewerApp } from "./App.js";
 import {
     CtrlAltDelDto,
     KeyDownDto,
@@ -21,7 +21,7 @@ import {
     SetQualityModeDto
 } from "./Interfaces/Dtos.js";
 import { CreateGUID } from "./Utilities.js";
-import { FileTransferProgress } from "./UI.js";
+import { FileTransferProgress, ScreenViewer, ShowToast } from "./UI.js";
 import { DtoType } from "./Enums/DtoType.js";
 import { RemoteControlMode } from "./Enums/RemoteControlMode.js";
 
@@ -39,8 +39,10 @@ export class MessageSender {
         var dto = new FrameReceivedDto(timestamp);
         await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.FrameReceived);
     }
-    async SendSelectScreen(displayName: string) {
+    async SendSelectScreen(displayName: string, displayLabel?: string) {
         var dto = new SelectScreenDto(displayName);
+        ScreenViewer.classList.add("switching");
+        ShowToast(`Switching to ${displayLabel || displayName}...`);
         await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.SelectScreen);
     }
     async SendMouseMove(percentX: number, percentY: number) {

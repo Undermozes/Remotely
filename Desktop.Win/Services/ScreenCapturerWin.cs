@@ -24,6 +24,7 @@
 using Remotely.Desktop.Shared.Abstractions;
 using Remotely.Desktop.Shared.Services;
 using Remotely.Shared.Models;
+using Remotely.Shared.Models.Dtos;
 using Bitbound.SimpleMessenger;
 using Remotely.Desktop.Win.Helpers;
 using Remotely.Desktop.Win.Models;
@@ -110,6 +111,43 @@ public class ScreenCapturerWin : IScreenCapturer
         return DisplaysEnumerationHelper
             .GetDisplays()
             .Select(x => x.DeviceName);
+    }
+
+    public IEnumerable<DisplayLayoutDto> GetDisplayLayouts()
+    {
+        return DisplaysEnumerationHelper.GetDisplays().Select(d => new DisplayLayoutDto
+        {
+            DisplayName = d.DeviceName,
+            X = d.MonitorArea.X,
+            Y = d.MonitorArea.Y,
+            Width = d.MonitorArea.Width,
+            Height = d.MonitorArea.Height,
+            IsPrimary = d.IsPrimary
+        });
+    }
+
+    public Result<SKBitmap> GetDisplayThumbnail(string displayName)
+    {
+        try
+        {
+            if (!_displays.TryGetValue(displayName, out var display))
+            {
+                return Result.Fail<SKBitmap>($"Display '{displayName}' not found.");
+            }
+
+            var area = display.MonitorArea;
+            using var bitmap = new Bitmap(area.Width, area.Height, PixelFormat.Format32bppArgb);
+            using (var graphic = Graphics.FromImage(bitmap))
+            {
+                graphic.CopyFromScreen(area.Left, area.Top, 0, 0, new Size(area.Width, area.Height));
+            }
+            return Result.Ok(bitmap.ToSKBitmap());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while capturing thumbnail for display {displayName}.", displayName);
+            return Result.Fail<SKBitmap>(ex);
+        }
     }
 
     public SKRect GetFrameDiffArea()

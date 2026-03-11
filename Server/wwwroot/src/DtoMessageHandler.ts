@@ -9,6 +9,7 @@ import {
     CursorChangeDto,
     ScreenDataDto,
     ScreenSizeDto,
+    ScreenThumbnailDto,
     FileDto,
     WindowsSessionsDto,
     DtoWrapper,
@@ -47,6 +48,8 @@ export class DtoMessageHandler {
                 this.HandleFile(wrapper);
             case DtoType.SessionMetrics:
                 await this.HandleSessionMetrics(wrapper);
+            case DtoType.ScreenThumbnail:
+                this.HandleScreenThumbnail(wrapper);
             default:
                 break;
         }
@@ -99,7 +102,7 @@ export class DtoMessageHandler {
         document.title = `${screenDataDto.MachineName} - Remote Control Session`;
         UI.ToggleConnectUI(false);
         UI.SetScreenSize(screenDataDto.ScreenWidth, screenDataDto.ScreenHeight);
-        UI.UpdateDisplays(screenDataDto.SelectedDisplay, screenDataDto.DisplayNames);
+        UI.UpdateDisplays(screenDataDto.SelectedDisplay, screenDataDto.DisplayNames, screenDataDto.DisplayLayouts);
     }
 
     HandleScreenSize(wrapper: DtoWrapper) {
@@ -109,7 +112,18 @@ export class DtoMessageHandler {
             return;
         }
 
+        UI.ScreenViewer.classList.remove("switching");
         UI.SetScreenSize(screenSizeDto.Width, screenSizeDto.Height);
+    }
+
+    HandleScreenThumbnail(wrapper: DtoWrapper) {
+        let thumbnailDto = TryComplete<ScreenThumbnailDto>(wrapper);
+
+        if (!thumbnailDto) {
+            return;
+        }
+
+        UI.UpdateThumbnail(thumbnailDto.DisplayName, thumbnailDto.ImageBytes);
     }
 
     async HandleSessionMetrics(wrapper: DtoWrapper) {

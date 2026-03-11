@@ -2,6 +2,7 @@ using Remotely.Desktop.Shared.Abstractions;
 using Remotely.Desktop.Shared.Services;
 using Microsoft.Extensions.Logging;
 using Remotely.Shared.Primitives;
+using Remotely.Shared.Models.Dtos;
 using SkiaSharp;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -44,6 +45,72 @@ public class ScreenCapturerLinux : IScreenCapturer
     public IEnumerable<string> GetDisplayNames()
     {
         return _x11Screens.Keys.Select(x => x.ToString());
+    }
+
+    public IEnumerable<DisplayLayoutDto> GetDisplayLayouts()
+    {
+        return _x11Screens.Select(kvp => new DisplayLayoutDto
+        {
+            DisplayName = kvp.Key,
+            X = kvp.Value.x,
+            Y = kvp.Value.y,
+            Width = kvp.Value.width,
+            Height = kvp.Value.height,
+            IsPrimary = kvp.Value.primary
+        });
+    }
+
+    public Result<SKBitmap> GetDisplayThumbnail(string displayName)
+    {
+        try
+        {
+            if (!_x11Screens.TryGetValue(displayName, out var screen))
+            {
+                return Result.Fail<SKBitmap>($"Display '{displayName}' not found.");
+            }
+
+            var bounds = new Rectangle(screen.x, screen.y, screen.width, screen.height);
+            var bitmap = new SKBitmap(bounds.Width, bounds.Height);
+            var window = LibX11.XDefaultRootWindow(Display);
+
+            var imagePointer = LibX11.XGetImage(Display,
+                window,
+                bounds.X,
+                bounds.Y,
+                bounds.Width,
+                bounds.Height,
+                ~0,
+                2);
+
+            if (imagePointer == nint.Zero)
+            {
+                return Result.Ok(bitmap);
+            }
+
+            var image = Marshal.PtrToStructure<LibX11.XImage>(imagePointer);
+            var pixels = bitmap.GetPixels();
+            unsafe
+            {
+                var scan1 = (byte*)pixels.ToPointer();
+                var scan2 = (byte*)image.data.ToPointer();
+                var bytesPerPixel = bitmap.BytesPerPixel;
+                var totalSize = bitmap.Height * bitmap.Width * bytesPerPixel;
+                for (var counter = 0; counter < totalSize; counter++)
+                {
+                    scan1[counter] = scan2[counter];
+                }
+            }
+
+            Marshal.DestroyStructure<LibX11.XImage>(imagePointer);
+            LibX11.XDestroyImage(imagePointer);
+
+            return Result.Ok(bitmap);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while capturing thumbnail for display {displayName}.", displayName);
+            return Result.Fail<SKBitmap>(ex);
+        }
     }
 
     public SKRect GetFrameDiffArea()

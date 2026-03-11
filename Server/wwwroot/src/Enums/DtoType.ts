@@ -23,5 +23,6 @@
     FrameReceived = 25,
     OpenFileTransferWindow = 27,
     SessionMetrics = 28,
-    QualityMode = 29
+    QualityMode = 29,
+    ScreenThumbnail = 30
 }

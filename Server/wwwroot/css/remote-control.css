@@ -480,3 +480,61 @@ footer {
     grid-template-columns: 0 2fr 1fr;
   }
 }
+
+/* Monitor switch animation */
+@keyframes switching-fade {
+    0% { opacity: 1; }
+    50% { opacity: 0.2; }
+    100% { opacity: 1; }
+}
+
+#screenViewer.switching {
+    animation: switching-fade 0.3s ease-in-out;
+}
+
+/* Monitor layout diagram */
+.monitor-layout-diagram {
+    display: flex;
+    justify-content: center;
+    padding: 6px 4px 4px 4px;
+    cursor: default;
+}
+
+.monitor-layout-rect {
+    fill: rgba(80, 120, 200, 0.3);
+    stroke: rgba(100, 150, 230, 0.8);
+    stroke-width: 1.5;
+    cursor: pointer;
+    transition: fill 0.15s ease;
+}
+
+.monitor-layout-rect:hover {
+    fill: rgba(80, 120, 200, 0.6);
+}
+
+.monitor-layout-rect-selected {
+    fill: rgba(0, 160, 120, 0.45);
+    stroke: rgba(0, 200, 150, 0.9);
+}
+
+/* Monitor thumbnail buttons */
+#screenSelectMenu button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px;
+    gap: 4px;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+}
+
+.monitor-thumbnail {
+    max-width: 160px;
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    display: block;
+    background-color: rgba(40, 40, 40, 0.5);
+    min-height: 20px;
+}

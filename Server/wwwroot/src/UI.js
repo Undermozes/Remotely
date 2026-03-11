@@ -60,6 +60,15 @@ export var QualityModeLabel = document.getElementById("qualityModeLabel");
 export var QualityAutoButton = document.getElementById("qualityAutoButton");
 export var QualityPerformanceButton = document.getElementById("qualityPerformanceButton");
 export var QualityHighButton = document.getElementById("qualityHighButton");
+const _thumbnailMap = new Map();
+export function UpdateThumbnail(displayName, imageBytes) {
+    var base64 = ConvertUInt8ArrayToBase64(imageBytes);
+    _thumbnailMap.set(displayName, `data:image/jpeg;base64,${base64}`);
+    var img = document.querySelector(`[data-display="${CSS.escape(displayName)}"] img`);
+    if (img) {
+        img.src = _thumbnailMap.get(displayName);
+    }
+}
 export function CloseAllPopupMenus(exceptMenuId) {
     PopupMenus.forEach(x => {
         if (x.id != exceptMenuId) {
@@ -150,24 +159,83 @@ export function UpdateCursor(imageBytes, hotSpotX, hotSpotY, cssOverride) {
         ScreenViewer.style.cursor = `url('data:image/png;base64,${base64}') ${hotSpotX} ${hotSpotY}, default`;
     }
 }
-export function UpdateDisplays(selectedDisplay, displayNames) {
+export function UpdateDisplays(selectedDisplay, displayNames, displayLayouts) {
     ScreenSelectMenu.innerHTML = "";
+    if (displayLayouts && displayLayouts.length > 1) {
+        var layoutContainer = RenderMonitorLayout(selectedDisplay, displayLayouts);
+        ScreenSelectMenu.appendChild(layoutContainer);
+    }
     for (let i = 0; i < displayNames.length; i++) {
         var button = document.createElement("button");
-        button.innerHTML = `Monitor ${i}`;
+        button.setAttribute("data-display", displayNames[i]);
+        var img = document.createElement("img");
+        img.className = "monitor-thumbnail";
+        img.alt = `Monitor ${i + 1} (${displayNames[i]})`;
+        var cachedSrc = _thumbnailMap.get(displayNames[i]);
+        if (cachedSrc) {
+            img.src = cachedSrc;
+        }
+        var label = document.createElement("span");
+        label.innerText = `Monitor ${i + 1}`;
         if (displayNames[i] == selectedDisplay) {
             button.classList.add("toggled");
         }
+        button.appendChild(img);
+        button.appendChild(label);
         ScreenSelectMenu.appendChild(button);
         button.onclick = (ev) => {
-            ViewerApp.MessageSender.SendSelectScreen(displayNames[i]);
+            ViewerApp.MessageSender.SendSelectScreen(displayNames[i], `Monitor ${i + 1}`);
             ScreenSelectMenu.classList.toggle("open");
-            ScreenSelectMenu.querySelectorAll("button").forEach(button => {
-                button.classList.remove("toggled");
+            ScreenSelectMenu.querySelectorAll("button").forEach(btn => {
+                btn.classList.remove("toggled");
             });
             ev.currentTarget.classList.add("toggled");
         };
     }
+}
+export function RenderMonitorLayout(selectedDisplay, layouts) {
+    var container = document.createElement("div");
+    container.className = "monitor-layout-diagram";
+    var minX = Math.min(...layouts.map(l => l.X));
+    var minY = Math.min(...layouts.map(l => l.Y));
+    var maxX = Math.max(...layouts.map(l => l.X + l.Width));
+    var maxY = Math.max(...layouts.map(l => l.Y + l.Height));
+    var totalW = maxX - minX || 1;
+    var totalH = maxY - minY || 1;
+    const svgW = 200;
+    const svgH = Math.max(40, Math.round(svgW * totalH / totalW));
+    const padding = 4;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", String(svgW + padding * 2));
+    svg.setAttribute("height", String(svgH + padding * 2));
+    svg.setAttribute("viewBox", `0 0 ${svgW + padding * 2} ${svgH + padding * 2}`);
+    svg.style.display = "block";
+    for (let li = 0; li < layouts.length; li++) {
+        var layout = layouts[li];
+        var rx = padding + Math.round((layout.X - minX) / totalW * svgW);
+        var ry = padding + Math.round((layout.Y - minY) / totalH * svgH);
+        var rw = Math.max(1, Math.round(layout.Width / totalW * svgW) - 2);
+        var rh = Math.max(1, Math.round(layout.Height / totalH * svgH) - 2);
+        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", String(rx));
+        rect.setAttribute("y", String(ry));
+        rect.setAttribute("width", String(rw));
+        rect.setAttribute("height", String(rh));
+        rect.setAttribute("rx", "3");
+        rect.classList.add("monitor-layout-rect");
+        if (layout.DisplayName === selectedDisplay) {
+            rect.classList.add("monitor-layout-rect-selected");
+        }
+        var displayName = layout.DisplayName;
+        var monitorLabel = `Monitor ${li + 1}`;
+        rect.addEventListener("click", () => {
+            ViewerApp.MessageSender.SendSelectScreen(displayName, monitorLabel);
+            ScreenSelectMenu.classList.toggle("open");
+        });
+        svg.appendChild(rect);
+    }
+    container.appendChild(svg);
+    return container;
 }
 export function UpdateMetrics(metricsDto) {
     FpsDiv.innerHTML = metricsDto.Fps.toFixed(0);

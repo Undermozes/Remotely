@@ -19,4 +19,7 @@ public class ScreenDataDto
 
     [DataMember(Name = "ScreenHeight")]
     public int ScreenHeight { get; init; }
+
+    [DataMember(Name = "DisplayLayouts")]
+    public IEnumerable<DisplayLayoutDto> DisplayLayouts { get; init; } = Enumerable.Empty<DisplayLayoutDto>();
 }
