@@ -1,0 +1,21 @@
+# These settings are synced to GitHub by https://probot.github.io/apps/settings/
+
+branches:
+  - name: master
+    # https://docs.github.com/en/rest/branches/branch-protection
+    protection:
+      # Require at least one approving review on a pull request
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+      # Require status checks to pass before merging
+      required_status_checks:
+        strict: true
+        contexts:
+          - "build (Release)"
+      # Enforce all configured restrictions for administrators
+      enforce_admins: true
+      # Prevent force pushes and branch deletion
+      allow_force_pushes: false
+      allow_deletions: false
+      restrictions: null
