@@ -100,6 +100,11 @@ public class UpdaterMac : IUpdater
 
             _logger.LogInformation("Service Updater: Update found.");
 
+            if (response.Headers.ETag is { } responseEtag)
+            {
+                await File.WriteAllTextAsync("etag.txt", responseEtag.ToString());
+            }
+
             await InstallLatestVersion();
 
         }

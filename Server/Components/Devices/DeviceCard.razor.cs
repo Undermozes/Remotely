@@ -354,6 +354,12 @@ public partial class DeviceCard : AuthComponentBase
         }
     }
 
+    private async Task UpdateAgent()
+    {
+        await CircuitConnection.UpdateAgents(new[] { Device.ID });
+        ToastService.ShowToast("Update command sent.");
+    }
+
     private async Task UninstallAgent()
     {
         var result = await JsInterop.Confirm("Are you sure you want to uninstall this agent?  This is permanent!");

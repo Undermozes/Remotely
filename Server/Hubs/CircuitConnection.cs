@@ -31,6 +31,8 @@ public interface ICircuitConnection
 
     Task ReinstallAgents(string[] deviceIDs);
 
+    Task UpdateAgents(string[] deviceIDs);
+
     Task<Result<RemoteControlSession>> RemoteControl(string deviceID, bool viewOnly);
 
     Task RemoveDevices(string[] deviceIDs);
@@ -213,6 +215,13 @@ public class CircuitConnection : CircuitHandler, ICircuitConnection
         var connections = GetActiveConnectionsForUserOrg(deviceIDs);
         await _agentHubContext.Clients.Clients(connections).ReinstallAgent();
         _dataService.RemoveDevices(deviceIDs);
+    }
+
+    public async Task UpdateAgents(string[] deviceIDs)
+    {
+        deviceIDs = _dataService.FilterDeviceIdsByUserPermission(deviceIDs, User);
+        var connections = GetActiveConnectionsForUserOrg(deviceIDs);
+        await _agentHubContext.Clients.Clients(connections).ReinstallAgent();
     }
 
     public async Task<Result<RemoteControlSession>> RemoteControl(string deviceId, bool viewOnly)
