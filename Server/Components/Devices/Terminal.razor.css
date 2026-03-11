@@ -2,7 +2,7 @@
 .terminal-frame {
     position: fixed;
     bottom: 0;
-    left: 260px;
+    left: 256px;
     right: 10px;
     z-index: 2;
     pointer-events: none;

@@ -24,21 +24,30 @@
 
 /* Active NavLink state */
 ::deep .nav-link.active {
-    background-color: rgba(99, 102, 241, 0.15) !important;
-    color: #818cf8 !important;
-    border-left: 2px solid #6366f1;
+    background-color: rgba(99, 102, 241, 0.12) !important;
+    color: #a5b4fc !important;
+    border-left: 2px solid #818cf8;
     padding-left: calc(0.75rem - 2px);
 }
 
 ::deep .nav-link.active:hover {
-    background-color: rgba(99, 102, 241, 0.25) !important;
+    background-color: rgba(99, 102, 241, 0.2) !important;
 }
 
 .nav-icon {
     width: 1rem;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     flex-shrink: 0;
     text-align: center;
+}
+
+/* Nav content fills remaining sidebar height and is scrollable */
+.nav-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 /* Mobile: hamburger visible, nav hidden when collapsed */
@@ -59,7 +68,10 @@
 @media (min-width: 768px) {
     .nav-hidden {
         /* Always show nav on desktop regardless of toggle state */
-        display: block !important;
+        display: flex !important;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
     }
 
     .nav-toggler {

@@ -3,38 +3,45 @@
 @inherits LayoutComponentBase
 @inject NavigationManager NavMan
 
-<AuthorizeView Policy="@PolicyNames.TwoFactorRequired">
-    <Authorized>
-        <div class="flex flex-col md:flex-row min-h-screen bg-slate-900 text-slate-100">
-            <div class="w-full md:w-64 bg-slate-800 flex-shrink-0 md:h-screen md:sticky md:top-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-slate-700 flex flex-col">
-                <NavMenu />
-            </div>
-            <div class="flex-1 overflow-auto bg-slate-900 min-h-0">
-                <div class="p-6">
-                    @Body
-                </div>
-            </div>
-        </div>
-    </Authorized>
-    <NotAuthorized>
-        <div class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-8 max-w-md w-full shadow-xl">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shield-halved text-white"></i>
+<AuthorizeView>
+    <Authorized Context="authUser">
+        <AuthorizeView Policy="@PolicyNames.TwoFactorRequired">
+            <Authorized Context="tfaUser">
+                <div class="flex min-h-screen bg-slate-900 text-slate-100">
+                    <div class="w-64 bg-slate-800 flex-shrink-0 h-screen sticky top-0 border-r border-slate-700 flex flex-col">
+                        <NavMenu />
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-100">Two-Factor Authentication Required</h3>
+                    <div class="flex-1 overflow-auto bg-slate-900">
+                        <div class="p-6">
+                            @Body
+                        </div>
+                    </div>
                 </div>
-                <hr class="border-slate-700 mb-5" />
-                <p class="text-slate-300 text-sm leading-relaxed mb-6">
-                    Two-factor authentication is required. Click the button below to set up your authenticator app.
-                </p>
-                <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-lg transition-colors duration-200 text-sm"
-                        @onclick="NavigateToTwoFactor">
-                    Enable 2FA
-                </button>
-            </div>
-        </div>
+            </Authorized>
+            <NotAuthorized Context="tfaNotAuth">
+                <div class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+                    <div class="bg-slate-800 rounded-xl border border-slate-700 p-8 max-w-md w-full shadow-xl">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-halved text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-slate-100">Two-Factor Authentication Required</h3>
+                        </div>
+                        <hr class="border-slate-700 mb-5" />
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                            Two-factor authentication is required. Click the button below to set up your authenticator app.
+                        </p>
+                        <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-lg transition-colors duration-200 text-sm"
+                                @onclick="NavigateToTwoFactor">
+                            Enable 2FA
+                        </button>
+                    </div>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </Authorized>
+    <NotAuthorized Context="notAuth">
+        @Body
     </NotAuthorized>
 </AuthorizeView>
 

@@ -7,7 +7,6 @@
     user-select: none;
 }
 
-
 #alertsFrame {
     position: fixed;
     top: 0;
@@ -18,10 +17,9 @@
     width: 350px;
     overflow-x: hidden;
     overflow-y: auto;
-    text-align: center;
-    opacity: 0;
     z-index: 4;
     transition: .25s ease all;
+    pointer-events: none;
 }
 
     #alertsFrame.open {
@@ -31,10 +29,8 @@
         transform: translateX(0);
     }
 
-
 @media (min-width: 641px) {
     #alertsButton {
         top: 5px;
     }
-
 }
