@@ -5,6 +5,7 @@ using Remotely.Shared.Models.Dtos;
 using MessagePack;
 using Microsoft.Extensions.Logging;
 using Remotely.Desktop.Native.Windows;
+using Remotely.Shared.Enums;
 
 namespace Remotely.Desktop.Shared.Services;
 
@@ -125,6 +126,9 @@ public class DtoMessageHandler : IDtoMessageHandler
                     break;
                 case DtoType.OpenFileTransferWindow:
                     OpenFileTransferWindow(viewer);
+                    break;
+                case DtoType.QualityMode:
+                    SetQualityMode(wrapper, viewer);
                     break;
                 default:
                     break;
@@ -282,6 +286,19 @@ public class DtoMessageHandler : IDtoMessageHandler
     private void OpenFileTransferWindow(IViewer viewer)
     {
         _fileTransferService.OpenFileTransferWindow(viewer);
+    }
+
+    private void SetQualityMode(DtoWrapper wrapper, IViewer viewer)
+    {
+        if (!DtoChunker.TryComplete<SetQualityModeDto>(wrapper, out var dto))
+        {
+            return;
+        }
+
+        viewer.QualityMode = dto!.QualityMode;
+        _logger.LogInformation("Quality mode changed to {qualityMode} for viewer {viewerConnectionId}.",
+            dto.QualityMode,
+            viewer.ViewerConnectionId);
     }
 
     private void SelectScreen(DtoWrapper wrapper, IViewer viewer)

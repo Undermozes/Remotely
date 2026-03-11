@@ -67,6 +67,27 @@
         </select>
     </div>
 
+    <div id="qualityModeMenu" class="popup-menu">
+        <div class="text-center" style="margin-bottom: 5px;">
+            Streaming Quality
+        </div>
+        <button id="qualityAutoButton" class="quality-mode-option toggled"
+                title="Automatically adapts quality based on network conditions.">
+            <i class="fas fa-magic"></i>
+            Auto (Adaptive)
+        </button>
+        <button id="qualityPerformanceButton" class="quality-mode-option"
+                title="Lower image quality, reduces bandwidth and improves performance on slow networks.">
+            <i class="fas fa-tachometer-alt"></i>
+            Performance (Lower Quality)
+        </button>
+        <button id="qualityHighButton" class="quality-mode-option"
+                title="Highest image quality, uses more bandwidth. Best for fast local networks.">
+            <i class="fas fa-star"></i>
+            Quality (Higher Bandwidth)
+        </button>
+    </div>
+
     <div id="extrasMenu" class="popup-menu">
 
         <button id="audioButton"
@@ -91,6 +112,12 @@
             title="Toggle display of session metrics.">
             <i class="fas fa-gauge"></i>
             Metrics
+        </button>
+
+        <button id="qualityModeButton"
+                title="Change the streaming quality mode.">
+            <i class="fas fa-sliders"></i>
+            Quality: <span id="qualityModeLabel">Auto</span>
         </button>
     </div>
 

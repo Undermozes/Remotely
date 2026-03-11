@@ -174,6 +174,14 @@ export interface SessionMetricsDto {
     IsGpuAccelerated: boolean;
 }
 
+export class SetQualityModeDto {
+    constructor(qualityMode: number) {
+        this.QualityMode = qualityMode;
+    }
+
+    QualityMode: number;
+}
+
 export class TapDto {
     constructor(percentX: number, percentY: number) {
         this.PercentX = percentX;

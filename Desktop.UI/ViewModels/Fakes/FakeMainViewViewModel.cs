@@ -4,6 +4,7 @@ using Remotely.Desktop.Shared.Services;
 using Remotely.Desktop.Shared.ViewModels;
 using Remotely.Shared.Models;
 using Remotely.Shared.Models.Dtos;
+using Remotely.Shared.Enums;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -83,6 +84,8 @@ public class FakeMainViewViewModel : FakeBrandedViewModelBase, IMainViewViewMode
         public bool IsResponsive => true;
 
         public string Name { get; set; } = "Rick James";
+
+        public RemoteControlQualityMode QualityMode { get; set; } = RemoteControlQualityMode.Auto;
 
         public TimeSpan RoundTripLatency => default;
 

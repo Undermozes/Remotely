@@ -22,5 +22,6 @@
     SetKeyStatesUp = 24,
     FrameReceived = 25,
     OpenFileTransferWindow = 27,
-    SessionMetrics = 28
+    SessionMetrics = 28,
+    QualityMode = 29
 }

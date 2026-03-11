@@ -1,5 +1,5 @@
 import { ViewerApp } from "./App.js";
-import { CtrlAltDelDto, KeyDownDto, KeyPressDto, KeyUpDto, MouseDownDto, MouseMoveDto, MouseUpDto, MouseWheelDto, SelectScreenDto, TapDto, ToggleAudioDto, ToggleBlockInputDto, TextTransferDto, FileDto, WindowsSessionsDto, EmptyDto, FrameReceivedDto } from "./Interfaces/Dtos.js";
+import { CtrlAltDelDto, KeyDownDto, KeyPressDto, KeyUpDto, MouseDownDto, MouseMoveDto, MouseUpDto, MouseWheelDto, SelectScreenDto, TapDto, ToggleAudioDto, ToggleBlockInputDto, TextTransferDto, FileDto, WindowsSessionsDto, EmptyDto, FrameReceivedDto, SetQualityModeDto } from "./Interfaces/Dtos.js";
 import { CreateGUID } from "./Utilities.js";
 import { FileTransferProgress } from "./UI.js";
 import { DtoType } from "./Enums/DtoType.js";
@@ -93,6 +93,10 @@ export class MessageSender {
     async SendTextTransfer(text, typeText) {
         var dto = new TextTransferDto(text, typeText);
         await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.TextTransfer);
+    }
+    async SendQualityMode(qualityMode) {
+        var dto = new SetQualityModeDto(qualityMode);
+        await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.QualityMode);
     }
 }
 //# sourceMappingURL=MessageSender.js.map

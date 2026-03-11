@@ -57,6 +57,12 @@ export var WindowsSessionMenuButton = document.getElementById("windowsSessionMen
 export var MetricsButton = document.getElementById("metricsButton") as HTMLButtonElement;
 export var MetricsFrame = document.getElementById("metricsFrame") as HTMLDivElement;
 export var BetaPillPullDown = document.getElementById("betaPillPullDown") as HTMLDivElement;
+export var QualityModeButton = document.getElementById("qualityModeButton") as HTMLButtonElement;
+export var QualityModeMenu = document.getElementById("qualityModeMenu") as HTMLDivElement;
+export var QualityModeLabel = document.getElementById("qualityModeLabel") as HTMLSpanElement;
+export var QualityAutoButton = document.getElementById("qualityAutoButton") as HTMLButtonElement;
+export var QualityPerformanceButton = document.getElementById("qualityPerformanceButton") as HTMLButtonElement;
+export var QualityHighButton = document.getElementById("qualityHighButton") as HTMLButtonElement;
 
 export function CloseAllPopupMenus(exceptMenuId: string) {
     PopupMenus.forEach(x => {

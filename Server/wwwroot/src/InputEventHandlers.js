@@ -1,8 +1,9 @@
-import { AudioButton, ChangeScreenButton, ScreenSelectMenu, ClipboardTransferButton, ClipboardTransferMenu, TypeClipboardButton, ConnectButton, CtrlAltDelButton, DisconnectButton, FileTransferButton, FileTransferInput, FitToScreenButton, ScreenViewer, BlockInputButton, InviteButton, KeyboardButton, TouchKeyboardInput, MenuFrame, MenuButton, ScreenViewerWrapper, WindowsSessionSelect, FileTransferMenu, FileUploadButtton, FileDownloadButton, ViewOnlyButton, FullScreenButton, RequesterNameInput, SessionIDInput, ConnectForm, CloseAllPopupMenus, ExtrasMenu, ExtrasMenuButton, WindowsSessionMenuButton, WindowsSessionMenu, MetricsButton, MetricsFrame, SetStatusMessage, BetaPillPullDown, } from "./UI.js";
+import { AudioButton, ChangeScreenButton, ScreenSelectMenu, ClipboardTransferButton, ClipboardTransferMenu, TypeClipboardButton, ConnectButton, CtrlAltDelButton, DisconnectButton, FileTransferButton, FileTransferInput, FitToScreenButton, ScreenViewer, BlockInputButton, InviteButton, KeyboardButton, TouchKeyboardInput, MenuFrame, MenuButton, ScreenViewerWrapper, WindowsSessionSelect, FileTransferMenu, FileUploadButtton, FileDownloadButton, ViewOnlyButton, FullScreenButton, RequesterNameInput, SessionIDInput, ConnectForm, CloseAllPopupMenus, ExtrasMenu, ExtrasMenuButton, WindowsSessionMenuButton, WindowsSessionMenu, MetricsButton, MetricsFrame, SetStatusMessage, BetaPillPullDown, QualityModeButton, QualityModeMenu, QualityModeLabel, QualityAutoButton, QualityPerformanceButton, QualityHighButton, } from "./UI.js";
 import { Sound } from "./Sound.js";
 import { ViewerApp } from "./App.js";
 import { UploadFiles } from "./FileTransferService.js";
 import { RemoteControlMode } from "./Enums/RemoteControlMode.js";
+import { RemoteControlQualityMode } from "./Enums/RemoteControlQualityMode.js";
 import { GetDistanceBetween } from "./Utilities.js";
 import { ShowToast } from "./UI.js";
 var isDragging;
@@ -259,6 +260,49 @@ export function ApplyInputHandlers() {
     });
     MetricsButton.addEventListener("click", () => {
         MetricsFrame.classList.toggle("d-none");
+    });
+    QualityModeButton.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        CloseAllPopupMenus(QualityModeMenu.id);
+        const x = document.body.clientWidth -
+            QualityModeButton.getBoundingClientRect().right;
+        const right = `${x.toFixed(0)}px`;
+        const y = QualityModeButton.getBoundingClientRect().bottom;
+        const top = `${y.toFixed(0)}px`;
+        QualityModeMenu.style.right = right;
+        QualityModeMenu.style.top = top;
+        QualityModeMenu.classList.toggle("open");
+        window.addEventListener("click", () => {
+            CloseAllPopupMenus(null);
+        }, { once: true });
+    });
+    const setQualityMode = async (mode, label) => {
+        [QualityAutoButton, QualityPerformanceButton, QualityHighButton].forEach(btn => {
+            btn.classList.remove("toggled");
+        });
+        switch (mode) {
+            case RemoteControlQualityMode.Auto:
+                QualityAutoButton.classList.add("toggled");
+                break;
+            case RemoteControlQualityMode.Performance:
+                QualityPerformanceButton.classList.add("toggled");
+                break;
+            case RemoteControlQualityMode.Quality:
+                QualityHighButton.classList.add("toggled");
+                break;
+        }
+        QualityModeLabel.innerText = label;
+        await ViewerApp.MessageSender.SendQualityMode(mode);
+        ShowToast(`Quality mode set to: ${label}`);
+    };
+    QualityAutoButton.addEventListener("click", async () => {
+        await setQualityMode(RemoteControlQualityMode.Auto, "Auto");
+    });
+    QualityPerformanceButton.addEventListener("click", async () => {
+        await setQualityMode(RemoteControlQualityMode.Performance, "Performance");
+    });
+    QualityHighButton.addEventListener("click", async () => {
+        await setQualityMode(RemoteControlQualityMode.Quality, "Quality");
     });
     ScreenViewer.addEventListener("pointerup", async (ev) => {
         if (ViewerApp.ViewOnlyMode) {

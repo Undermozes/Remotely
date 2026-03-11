@@ -17,7 +17,8 @@ import {
     WindowsSessionsDto,
     DtoWrapper,
     EmptyDto,
-    FrameReceivedDto
+    FrameReceivedDto,
+    SetQualityModeDto
 } from "./Interfaces/Dtos.js";
 import { CreateGUID } from "./Utilities.js";
 import { FileTransferProgress } from "./UI.js";
@@ -127,5 +128,10 @@ export class MessageSender {
         var dto = new TextTransferDto(text, typeText);
         await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.TextTransfer);
 
+    }
+
+    async SendQualityMode(qualityMode: number) {
+        var dto = new SetQualityModeDto(qualityMode);
+        await ViewerApp.ViewerHubConnection.SendDtoToClient(dto, DtoType.QualityMode);
     }
 }

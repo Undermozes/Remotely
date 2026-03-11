@@ -70,6 +70,11 @@ export class FrameReceivedDto {
         this.Timestamp = timestamp;
     }
 }
+export class SetQualityModeDto {
+    constructor(qualityMode) {
+        this.QualityMode = qualityMode;
+    }
+}
 export class TapDto {
     constructor(percentX, percentY) {
         this.PercentX = percentX;
