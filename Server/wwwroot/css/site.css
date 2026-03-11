@@ -7,6 +7,13 @@ html, body {
     color: #cbd5e1;
 }
 
+/* Remove Bootstrap darkly heading outlines */
+h1, h2, h3, h4, h5, h6 {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* Links */
 a {
     color: #818cf8;

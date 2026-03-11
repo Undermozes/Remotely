@@ -46,7 +46,7 @@
     display: none;
 }
 
-.collapse {
+.nav-hidden {
     display: none;
 }
 
@@ -57,7 +57,7 @@
 }
 
 @media (min-width: 768px) {
-    .collapse {
+    .nav-hidden {
         /* Always show nav on desktop regardless of toggle state */
         display: block !important;
     }

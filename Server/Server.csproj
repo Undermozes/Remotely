@@ -54,4 +54,10 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 
+  <Target Name="BuildTailwindCSS" BeforeTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)/tailwind.config.js')">
+    <Exec Command="npx tailwindcss -i tailwind-input.css -o wwwroot/css/tailwind.css --minify"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          ContinueOnError="true" />
+  </Target>
+
 </Project>
