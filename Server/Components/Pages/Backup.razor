@@ -256,6 +256,13 @@
                 return;
             }
 
+            if (!string.IsNullOrEmpty(backup.UserName) &&
+                !string.Equals(backup.UserName, UserName, StringComparison.OrdinalIgnoreCase))
+            {
+                _alertMessage = "This backup belongs to a different user account.";
+                return;
+            }
+
             var existingDevices = DataService.GetDevicesForUser(UserName);
             await BackupService.RestoreBackupAsync(backup, existingDevices, DataService);
 
@@ -360,6 +367,13 @@
             if (backup is null)
             {
                 _alertMessage = "Invalid backup file on Google Drive.";
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(backup.UserName) &&
+                !string.Equals(backup.UserName, UserName, StringComparison.OrdinalIgnoreCase))
+            {
+                _alertMessage = "This backup belongs to a different user account.";
                 return;
             }
 

@@ -29,6 +29,7 @@ public interface IGoogleDriveService
 {
     bool IsConfigured { get; }
     string GetAuthorizationUrl(string userId, string redirectUri);
+    string? ValidateOAuthState(string state);
     Task ExchangeCodeForTokenAsync(string userId, string code, string redirectUri);
     bool IsConnected(string userId);
     void Disconnect(string userId);
@@ -41,11 +42,13 @@ public class GoogleDriveService : IGoogleDriveService
 {
     private const string AppFolderName = "Remotely Backups";
     private const string BackupMimeType = "application/json";
+    private const long MaxDownloadSizeBytes = 10 * 1024 * 1024; // 10 MB
     private static readonly string[] Scopes = { DriveService.Scope.DriveFile };
 
     // TODO: Tokens are stored in memory and will be lost on application restart.
     // For production use, consider persisting tokens securely in the database.
     private readonly ConcurrentDictionary<string, TokenResponse> _userTokens = new();
+    private readonly ConcurrentDictionary<string, string> _pendingOAuthStates = new();
     private readonly GoogleDriveOptions _options;
     private readonly ILogger<GoogleDriveService> _logger;
 
@@ -68,10 +71,23 @@ public class GoogleDriveService : IGoogleDriveService
             throw new InvalidOperationException("Google Drive is not configured.");
         }
 
+        var stateToken = Convert.ToBase64String(
+            System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        _pendingOAuthStates[stateToken] = userId;
+
         var flow = CreateFlow();
         var uri = flow.CreateAuthorizationCodeRequest(redirectUri);
-        uri.State = userId;
+        uri.State = stateToken;
         return uri.Build().AbsoluteUri;
+    }
+
+    public string? ValidateOAuthState(string state)
+    {
+        if (_pendingOAuthStates.TryRemove(state, out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 
     public async Task ExchangeCodeForTokenAsync(string userId, string code, string redirectUri)
@@ -159,9 +175,20 @@ public class GoogleDriveService : IGoogleDriveService
     public async Task<Stream> DownloadBackupAsync(string userId, string fileId)
     {
         var service = CreateDriveService(userId);
-        var request = service.Files.Get(fileId);
+
+        // Check file size before downloading to prevent memory exhaustion.
+        var fileRequest = service.Files.Get(fileId);
+        fileRequest.Fields = "size";
+        var fileMeta = await fileRequest.ExecuteAsync();
+        if (fileMeta.Size.HasValue && fileMeta.Size.Value > MaxDownloadSizeBytes)
+        {
+            throw new InvalidOperationException(
+                $"Backup file exceeds the maximum allowed size of {MaxDownloadSizeBytes / (1024 * 1024)} MB.");
+        }
+
+        var downloadRequest = service.Files.Get(fileId);
         var stream = new MemoryStream();
-        await request.DownloadAsync(stream);
+        await downloadRequest.DownloadAsync(stream);
         stream.Position = 0;
         return stream;
     }
