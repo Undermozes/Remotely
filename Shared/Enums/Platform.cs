@@ -5,5 +5,6 @@ public enum Platform
     Windows,
     Linux,
     MacOS,
+    Android,
     Unknown
 }

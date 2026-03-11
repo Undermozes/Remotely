@@ -1,0 +1,77 @@
+name: Build Android Agent
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Desktop.Android/**'
+      - 'Desktop.Shared/**'
+      - 'Desktop.Native/**'
+      - 'Shared/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'Desktop.Android/**'
+      - 'Desktop.Shared/**'
+      - 'Desktop.Native/**'
+      - 'Shared/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Set version
+        run: |
+          VERSION_STRING=$(git show -s --format=%ci)
+          CURRENT_VERSION=$(date -d "$VERSION_STRING" +"%Y.%m.%d.%H%M" 2>/dev/null || \
+                            date -j -f "%Y-%m-%d %H:%M:%S %z" "$VERSION_STRING" +"%Y.%m.%d.%H%M" 2>/dev/null || \
+                            echo "1.0.0.0")
+          echo "CurrentVersion=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "Setting version to $CURRENT_VERSION"
+
+      - name: Restore dependencies
+        run: dotnet restore Desktop.Android/Desktop.Android.csproj
+
+      - name: Build (Debug)
+        run: >
+          dotnet build Desktop.Android/Desktop.Android.csproj
+          --configuration Debug
+          --no-restore
+          /p:Version=${{ env.CurrentVersion }}
+
+      - name: Build Release APK
+        run: >
+          dotnet publish Desktop.Android/Desktop.Android.csproj
+          --configuration Release
+          --no-restore
+          /p:Version=${{ env.CurrentVersion }}
+          /p:ApplicationVersion=${{ github.run_number }}
+          /p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS || 'remotely' }}
+          /p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEY_PASS || '' }}
+          /p:AndroidSigningStorePass=${{ secrets.ANDROID_STORE_PASS || '' }}
+          --output ./android-out/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Remotely-Android-APK
+          path: ./android-out/*.apk
+          if-no-files-found: warn

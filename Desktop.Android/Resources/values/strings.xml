@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Remotely</string>
+    <string name="accessibility_service_description">Enables Remotely to inject touch and keyboard input for remote control sessions.</string>
+</resources>

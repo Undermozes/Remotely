@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+  <!-- Networking -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+  <!-- Foreground service: agent and screen projection -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
+
+  <!-- Notifications (Android 13+) -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <!-- Screen capture via MediaProjection (no root required) -->
+  <!-- Permission is granted at runtime via MediaProjectionManager intent. -->
+
+  <!-- Audio capture (optional – gracefully disabled if denied) -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+  <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT"
+                   tools:ignore="ProtectedPermissions" />
+
+  <!-- File transfer -->
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                   android:maxSdkVersion="28" />
+  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+  <!-- Wake lock to keep connection alive -->
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+  <!-- Input injection via Accessibility Service – no explicit permission tag;
+       user must enable the service in Android Settings. -->
+
+  <application
+      android:label="Remotely"
+      android:icon="@android:drawable/ic_media_play"
+      android:allowBackup="false"
+      android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+    <activity
+        android:name="com.immense.remotely.desktop.MainActivity"
+        android:exported="true"
+        android:launchMode="singleTop"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <!-- Agent foreground service -->
+    <service
+        android:name="com.immense.remotely.desktop.AgentForegroundService"
+        android:exported="false"
+        android:foregroundServiceType="mediaProjection|remoteMessaging" />
+
+    <!-- Accessibility service for input injection -->
+    <service
+        android:name="com.immense.remotely.desktop.RemotelyAccessibilityService"
+        android:exported="true"
+        android:label="Remotely Input Control"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data
+          android:name="android.accessibilityservice"
+          android:resource="@xml/accessibility_service_config" />
+    </service>
+
+  </application>
+
+</manifest>
